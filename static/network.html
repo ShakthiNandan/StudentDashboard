@@ -1,0 +1,127 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 500px;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": "5bfefef0-24ad-4f24-98c3-9091cfa53d4c", "label": "Ryan Sathe", "shape": "dot", "title": "Student: Ryan Sathe\u003cbr\u003eReg No: 20249698\u003cbr\u003eDepartment: Information Technology"}, {"color": "#97c2fc", "id": "7ab42ebc-8f28-4521-bb91-5f9996250991", "label": "Tejas Vasa", "shape": "dot", "title": "Student: Tejas Vasa\u003cbr\u003eReg No: 20248035\u003cbr\u003eDepartment: Civil"}, {"color": "#97c2fc", "id": "a98e7a85-db69-4734-85b7-9105d5574ac5", "label": "Samar Sankaran", "shape": "dot", "title": "Student: Samar Sankaran\u003cbr\u003eReg No: 20245900\u003cbr\u003eDepartment: Mechanical"}, {"color": "#97c2fc", "id": "700ea50c-c3d6-409c-b1d0-c897df714517", "label": "Suhana Ganguly", "shape": "dot", "title": "Student: Suhana Ganguly\u003cbr\u003eReg No: 20242920\u003cbr\u003eDepartment: Civil"}, {"color": "#97c2fc", "id": "67a54dcb-dc53-4f62-9b43-7c204aad480f", "label": "Pihu Deep", "shape": "dot", "title": "Student: Pihu Deep\u003cbr\u003eReg No: 20247848\u003cbr\u003eDepartment: Mechanical"}, {"color": "#97c2fc", "id": "5b9e7cf6-70a7-48fb-934e-a5923395c76c", "label": "Dhruv Savant", "shape": "dot", "title": "Student: Dhruv Savant\u003cbr\u003eReg No: 20248867\u003cbr\u003eDepartment: Electronics"}, {"color": "#97c2fc", "id": "ac737041-b342-4bba-ae3a-4bad48d75dd3", "label": "Lakshit Walia", "shape": "dot", "title": "Student: Lakshit Walia\u003cbr\u003eReg No: 20246516\u003cbr\u003eDepartment: Information Technology"}, {"color": "#97c2fc", "id": "3fcde60d-c887-421a-a385-6993632bad8e", "label": "Nayantara Talwar", "shape": "dot", "title": "Student: Nayantara Talwar\u003cbr\u003eReg No: 20244582\u003cbr\u003eDepartment: Electronics"}, {"color": "#97c2fc", "id": "1846dff2-4750-4c93-be00-eb454da86125", "label": "Faiyaz Sarraf", "shape": "dot", "title": "Student: Faiyaz Sarraf\u003cbr\u003eReg No: 20244174\u003cbr\u003eDepartment: Civil"}, {"color": "#97c2fc", "id": "3e5d4108-a938-4553-a039-b4464c532204", "label": "Seher Krishna", "shape": "dot", "title": "Student: Seher Krishna\u003cbr\u003eReg No: 20245594\u003cbr\u003eDepartment: Information Technology"}, {"color": "#97c2fc", "id": "4b979a5c-0fc9-4b2e-8458-fd524ca3d13b", "label": "Samar Baral", "shape": "dot", "title": "Student: Samar Baral\u003cbr\u003eReg No: 20245374\u003cbr\u003eDepartment: Computer Science"}, {"color": "#97c2fc", "id": "ff6b6a8f-1850-4f9b-a7a1-b7768f17a403", "label": "Fateh Kara", "shape": "dot", "title": "Student: Fateh Kara\u003cbr\u003eReg No: 20248332\u003cbr\u003eDepartment: Electronics"}, {"color": "#97c2fc", "id": "7b097cdc-f4ab-485c-a844-4b666d8c13f3", "label": "Miraya Borah", "shape": "dot", "title": "Student: Miraya Borah\u003cbr\u003eReg No: 20249137\u003cbr\u003eDepartment: Mechanical"}, {"color": "#97c2fc", "id": "626e189d-6c07-406d-a199-fbcfc05e10c0", "label": "Nirvi Aurora", "shape": "dot", "title": "Student: Nirvi Aurora\u003cbr\u003eReg No: 20245722\u003cbr\u003eDepartment: Civil"}, {"color": "#97c2fc", "id": "17866dbc-b925-4d11-86d7-7e71021f33c9", "label": "Vanya Raman", "shape": "dot", "title": "Student: Vanya Raman\u003cbr\u003eReg No: 20245627\u003cbr\u003eDepartment: Mechanical"}, {"color": "#97c2fc", "id": "6c884de3-8b4c-4834-8d91-fc8481af13c7", "label": "Mannat Chad", "shape": "dot", "title": "Student: Mannat Chad\u003cbr\u003eReg No: 20249543\u003cbr\u003eDepartment: Civil"}, {"color": "#97c2fc", "id": "f237cc95-ad55-482c-ae23-f6f2ab3c7d02", "label": "Ivana Bahri", "shape": "dot", "title": "Student: Ivana Bahri\u003cbr\u003eReg No: 20241008\u003cbr\u003eDepartment: Information Technology"}, {"color": "#97c2fc", "id": "9b8cc0e5-d286-4e2a-878a-2893f2106fdb", "label": "Tushar Saha", "shape": "dot", "title": "Student: Tushar Saha\u003cbr\u003eReg No: 20249283\u003cbr\u003eDepartment: Electronics"}, {"color": "#97c2fc", "id": "b5309426-6b10-4a0d-b45b-c9d5f943e39f", "label": "Kabir Sodhi", "shape": "dot", "title": "Student: Kabir Sodhi\u003cbr\u003eReg No: 20243745\u003cbr\u003eDepartment: Computer Science"}, {"color": "#97c2fc", "id": "0135722c-ab33-42ae-af9b-2da84fc0b11e", "label": "Yasmin Amble", "shape": "dot", "title": "Student: Yasmin Amble\u003cbr\u003eReg No: 20246615\u003cbr\u003eDepartment: Mechanical"}, {"color": "#97c2fc", "id": "5f5b80fc-9c05-42a3-8fd6-07b64ba6e050", "label": "Dhanush Chaudhry", "shape": "dot", "title": "Student: Dhanush Chaudhry\u003cbr\u003eReg No: 20242277\u003cbr\u003eDepartment: Electronics"}, {"color": "#97c2fc", "id": "51912a5a-790f-46aa-83be-68444cafec21", "label": "Kismat Shroff", "shape": "dot", "title": "Student: Kismat Shroff\u003cbr\u003eReg No: 2024701\u003cbr\u003eDepartment: Electronics"}, {"color": "#97c2fc", "id": "3d2773d4-6d19-48ad-8851-d8d2cac1917f", "label": "Farhan Lad", "shape": "dot", "title": "Student: Farhan Lad\u003cbr\u003eReg No: 20244596\u003cbr\u003eDepartment: Computer Science"}, {"color": "#97c2fc", "id": "60141ac7-b8fc-4bec-ab7f-74dd7cf379eb", "label": "Miraya Reddy", "shape": "dot", "title": "Student: Miraya Reddy\u003cbr\u003eReg No: 20247996\u003cbr\u003eDepartment: Civil"}, {"color": "#97c2fc", "id": "e740b06c-098f-4a7c-b0ff-1cefb77509a8", "label": "Priyansh Sule", "shape": "dot", "title": "Student: Priyansh Sule\u003cbr\u003eReg No: 20247668\u003cbr\u003eDepartment: Electronics"}, {"color": "#97c2fc", "id": "9189834b-b9f7-4870-ba10-b5bed43dfde4", "label": "Heer Sood", "shape": "dot", "title": "Student: Heer Sood\u003cbr\u003eReg No: 20246623\u003cbr\u003eDepartment: Electronics"}, {"color": "#97c2fc", "id": "4926a56d-ab5b-4cab-88f3-023e26d6e699", "label": "Ivan Basak", "shape": "dot", "title": "Student: Ivan Basak\u003cbr\u003eReg No: 20241948\u003cbr\u003eDepartment: Information Technology"}, {"color": "#97c2fc", "id": "1724fd80-5cf5-4dd9-a75c-eefb0a89dcbd", "label": "Mamooty Goyal", "shape": "dot", "title": "Student: Mamooty Goyal\u003cbr\u003eReg No: 20241209\u003cbr\u003eDepartment: Mechanical"}, {"color": "#97c2fc", "id": "8ed2b916-5de0-4ace-94cb-ad5a23ff7cd4", "label": "Jhanvi Dhawan", "shape": "dot", "title": "Student: Jhanvi Dhawan\u003cbr\u003eReg No: 2024916\u003cbr\u003eDepartment: Civil"}, {"color": "#97c2fc", "id": "eb68e57c-e72f-47af-8881-51f860f0e7e3", "label": "Shlok Chand", "shape": "dot", "title": "Student: Shlok Chand\u003cbr\u003eReg No: 20248578\u003cbr\u003eDepartment: Civil"}, {"color": "#97c2fc", "id": "5ed40813-4365-4303-9bf9-de875407bca5", "label": "Suhana Badal", "shape": "dot", "title": "Student: Suhana Badal\u003cbr\u003eReg No: 20247958\u003cbr\u003eDepartment: Computer Science"}, {"color": "#97c2fc", "id": "342a3e1f-a5b9-459c-9b55-f57f4b614431", "label": "Vardaniya Mannan", "shape": "dot", "title": "Student: Vardaniya Mannan\u003cbr\u003eReg No: 20244215\u003cbr\u003eDepartment: Information Technology"}, {"color": "#97c2fc", "id": "665f7aff-0b7b-4e9f-8b36-cd0e8738069f", "label": "Vaibhav Sidhu", "shape": "dot", "title": "Student: Vaibhav Sidhu\u003cbr\u003eReg No: 20248761\u003cbr\u003eDepartment: Mechanical"}, {"color": "#97c2fc", "id": "b5e21f61-319c-47e1-863e-5ddf3c60763e", "label": "Gatik Manda", "shape": "dot", "title": "Student: Gatik Manda\u003cbr\u003eReg No: 20247140\u003cbr\u003eDepartment: Information Technology"}, {"color": "#97c2fc", "id": "8798e6d1-6f1a-4be9-a110-e07fcd9c60b9", "label": "Taran D\u2019Alia", "shape": "dot", "title": "Student: Taran D\u2019Alia\u003cbr\u003eReg No: 2024907\u003cbr\u003eDepartment: Computer Science"}, {"color": "#97c2fc", "id": "0978e843-f532-4783-8aa1-34ed66eb42db", "label": "Jayan Lala", "shape": "dot", "title": "Student: Jayan Lala\u003cbr\u003eReg No: 20249227\u003cbr\u003eDepartment: Electronics"}, {"color": "#97c2fc", "id": "3d2f4c7d-c1f3-4f08-a3a9-2e9576b712e7", "label": "Mamooty Chana", "shape": "dot", "title": "Student: Mamooty Chana\u003cbr\u003eReg No: 2024895\u003cbr\u003eDepartment: Civil"}, {"color": "#97c2fc", "id": "2c974246-75a1-4e46-831b-a765b1780cc9", "label": "Anahi Magar", "shape": "dot", "title": "Student: Anahi Magar\u003cbr\u003eReg No: 2024809\u003cbr\u003eDepartment: Computer Science"}, {"color": "#97c2fc", "id": "f2586bda-4ada-4c4d-9c01-19c5dee0a679", "label": "Pari Barad", "shape": "dot", "title": "Student: Pari Barad\u003cbr\u003eReg No: 20243270\u003cbr\u003eDepartment: Mechanical"}, {"color": "#97c2fc", "id": "c338a3d9-a8e2-4863-9361-db8ca8eed44e", "label": "Armaan Atwal", "shape": "dot", "title": "Student: Armaan Atwal\u003cbr\u003eReg No: 20245013\u003cbr\u003eDepartment: Mechanical"}, {"color": "#97c2fc", "id": "a9c0764b-df83-468a-bcc7-8102220b6de7", "label": "Ela Kashyap", "shape": "dot", "title": "Student: Ela Kashyap\u003cbr\u003eReg No: 2024247\u003cbr\u003eDepartment: Information Technology"}, {"color": "#97c2fc", "id": "73ede23f-30ea-4277-9d35-3ea02bcecd2c", "label": "Seher Virk", "shape": "dot", "title": "Student: Seher Virk\u003cbr\u003eReg No: 20244656\u003cbr\u003eDepartment: Computer Science"}, {"color": "#97c2fc", "id": "5da9da41-334e-4702-aada-9b2c8a1570f9", "label": "Arhaan Dutta", "shape": "dot", "title": "Student: Arhaan Dutta\u003cbr\u003eReg No: 20245538\u003cbr\u003eDepartment: Civil"}, {"color": "#97c2fc", "id": "1fce28e3-6858-44b9-9344-66ff0c33d512", "label": "Anaya Sinha", "shape": "dot", "title": "Student: Anaya Sinha\u003cbr\u003eReg No: 20248355\u003cbr\u003eDepartment: Computer Science"}, {"color": "#97c2fc", "id": "51647975-63b7-4e13-a945-356bc415d885", "label": "Ela Kara", "shape": "dot", "title": "Student: Ela Kara\u003cbr\u003eReg No: 20246943\u003cbr\u003eDepartment: Electronics"}, {"color": "#97c2fc", "id": "f97f638c-7c4f-4f4a-87f7-b674351c5f75", "label": "Samiha Tella", "shape": "dot", "title": "Student: Samiha Tella\u003cbr\u003eReg No: 20242669\u003cbr\u003eDepartment: Civil"}, {"color": "#97c2fc", "id": "63214f06-3f46-4481-a4f4-63ab5969f807", "label": "Saanvi Mangal", "shape": "dot", "title": "Student: Saanvi Mangal\u003cbr\u003eReg No: 20241733\u003cbr\u003eDepartment: Electronics"}, {"color": "#97c2fc", "id": "08ad2854-4491-4160-8e05-fdb5c594d664", "label": "Darshit Toor", "shape": "dot", "title": "Student: Darshit Toor\u003cbr\u003eReg No: 20245805\u003cbr\u003eDepartment: Information Technology"}, {"color": "#97c2fc", "id": "197e3227-1faa-4301-825d-ed56320418d5", "label": "Lavanya Devi", "shape": "dot", "title": "Student: Lavanya Devi\u003cbr\u003eReg No: 20243879\u003cbr\u003eDepartment: Information Technology"}, {"color": "#97c2fc", "id": "8247af42-3836-446e-b733-aab5b6f2d3b5", "label": "Pari Chanda", "shape": "dot", "title": "Student: Pari Chanda\u003cbr\u003eReg No: 20249187\u003cbr\u003eDepartment: Computer Science"}, {"color": "#ff9999", "id": "2ab18543-81c3-4a4b-929f-39a4c827b454", "label": "Prof. Jivika Wason", "shape": "dot", "title": "Staff: Prof. Jivika Wason"}, {"color": "#ff9999", "id": "86f9311a-264e-4c5b-8a5f-c49d2ff28483", "label": "Prof. Amira Chaudhuri", "shape": "dot", "title": "Staff: Prof. Amira Chaudhuri"}, {"color": "#ff9999", "id": "9af42e76-4ba6-4ac7-8606-81b0f1c46abd", "label": "Prof. Zain Lad", "shape": "dot", "title": "Staff: Prof. Zain Lad"}, {"color": "#ff9999", "id": "640a0a63-6fe7-48f7-81c8-c55399d151c2", "label": "Prof. Tiya Chowdhury", "shape": "dot", "title": "Staff: Prof. Tiya Chowdhury"}, {"color": "#ff9999", "id": "1ae8eac1-4251-498c-bdbc-083b0e8d1553", "label": "Prof. Rasha Guha", "shape": "dot", "title": "Staff: Prof. Rasha Guha"}]);
+                  edges = new vis.DataSet([{"from": "5bfefef0-24ad-4f24-98c3-9091cfa53d4c", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "5bfefef0-24ad-4f24-98c3-9091cfa53d4c", "title": "Mentor", "to": "2ab18543-81c3-4a4b-929f-39a4c827b454"}, {"from": "7ab42ebc-8f28-4521-bb91-5f9996250991", "title": "Mentor", "to": "9af42e76-4ba6-4ac7-8606-81b0f1c46abd"}, {"from": "a98e7a85-db69-4734-85b7-9105d5574ac5", "title": "Mentor", "to": "2ab18543-81c3-4a4b-929f-39a4c827b454"}, {"from": "a98e7a85-db69-4734-85b7-9105d5574ac5", "title": "Mentor", "to": "1ae8eac1-4251-498c-bdbc-083b0e8d1553"}, {"from": "700ea50c-c3d6-409c-b1d0-c897df714517", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "700ea50c-c3d6-409c-b1d0-c897df714517", "title": "Mentor", "to": "1ae8eac1-4251-498c-bdbc-083b0e8d1553"}, {"from": "67a54dcb-dc53-4f62-9b43-7c204aad480f", "title": "Mentor", "to": "9af42e76-4ba6-4ac7-8606-81b0f1c46abd"}, {"from": "67a54dcb-dc53-4f62-9b43-7c204aad480f", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "5b9e7cf6-70a7-48fb-934e-a5923395c76c", "title": "Mentor", "to": "1ae8eac1-4251-498c-bdbc-083b0e8d1553"}, {"from": "ac737041-b342-4bba-ae3a-4bad48d75dd3", "title": "Mentor", "to": "2ab18543-81c3-4a4b-929f-39a4c827b454"}, {"from": "ac737041-b342-4bba-ae3a-4bad48d75dd3", "title": "Mentor", "to": "640a0a63-6fe7-48f7-81c8-c55399d151c2"}, {"from": "3fcde60d-c887-421a-a385-6993632bad8e", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "1846dff2-4750-4c93-be00-eb454da86125", "title": "Mentor", "to": "9af42e76-4ba6-4ac7-8606-81b0f1c46abd"}, {"from": "1846dff2-4750-4c93-be00-eb454da86125", "title": "Mentor", "to": "640a0a63-6fe7-48f7-81c8-c55399d151c2"}, {"from": "3e5d4108-a938-4553-a039-b4464c532204", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "3e5d4108-a938-4553-a039-b4464c532204", "title": "Mentor", "to": "640a0a63-6fe7-48f7-81c8-c55399d151c2"}, {"from": "4b979a5c-0fc9-4b2e-8458-fd524ca3d13b", "title": "Mentor", "to": "2ab18543-81c3-4a4b-929f-39a4c827b454"}, {"from": "4b979a5c-0fc9-4b2e-8458-fd524ca3d13b", "title": "Mentor", "to": "640a0a63-6fe7-48f7-81c8-c55399d151c2"}, {"from": "ff6b6a8f-1850-4f9b-a7a1-b7768f17a403", "title": "Mentor", "to": "2ab18543-81c3-4a4b-929f-39a4c827b454"}, {"from": "7b097cdc-f4ab-485c-a844-4b666d8c13f3", "title": "Mentor", "to": "640a0a63-6fe7-48f7-81c8-c55399d151c2"}, {"from": "7b097cdc-f4ab-485c-a844-4b666d8c13f3", "title": "Mentor", "to": "9af42e76-4ba6-4ac7-8606-81b0f1c46abd"}, {"from": "626e189d-6c07-406d-a199-fbcfc05e10c0", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "17866dbc-b925-4d11-86d7-7e71021f33c9", "title": "Mentor", "to": "1ae8eac1-4251-498c-bdbc-083b0e8d1553"}, {"from": "6c884de3-8b4c-4834-8d91-fc8481af13c7", "title": "Mentor", "to": "1ae8eac1-4251-498c-bdbc-083b0e8d1553"}, {"from": "f237cc95-ad55-482c-ae23-f6f2ab3c7d02", "title": "Mentor", "to": "640a0a63-6fe7-48f7-81c8-c55399d151c2"}, {"from": "f237cc95-ad55-482c-ae23-f6f2ab3c7d02", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "9b8cc0e5-d286-4e2a-878a-2893f2106fdb", "title": "Mentor", "to": "1ae8eac1-4251-498c-bdbc-083b0e8d1553"}, {"from": "9b8cc0e5-d286-4e2a-878a-2893f2106fdb", "title": "Mentor", "to": "9af42e76-4ba6-4ac7-8606-81b0f1c46abd"}, {"from": "b5309426-6b10-4a0d-b45b-c9d5f943e39f", "title": "Mentor", "to": "2ab18543-81c3-4a4b-929f-39a4c827b454"}, {"from": "0135722c-ab33-42ae-af9b-2da84fc0b11e", "title": "Mentor", "to": "2ab18543-81c3-4a4b-929f-39a4c827b454"}, {"from": "5f5b80fc-9c05-42a3-8fd6-07b64ba6e050", "title": "Mentor", "to": "1ae8eac1-4251-498c-bdbc-083b0e8d1553"}, {"from": "5f5b80fc-9c05-42a3-8fd6-07b64ba6e050", "title": "Mentor", "to": "640a0a63-6fe7-48f7-81c8-c55399d151c2"}, {"from": "51912a5a-790f-46aa-83be-68444cafec21", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "3d2773d4-6d19-48ad-8851-d8d2cac1917f", "title": "Mentor", "to": "640a0a63-6fe7-48f7-81c8-c55399d151c2"}, {"from": "3d2773d4-6d19-48ad-8851-d8d2cac1917f", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "60141ac7-b8fc-4bec-ab7f-74dd7cf379eb", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "60141ac7-b8fc-4bec-ab7f-74dd7cf379eb", "title": "Mentor", "to": "1ae8eac1-4251-498c-bdbc-083b0e8d1553"}, {"from": "e740b06c-098f-4a7c-b0ff-1cefb77509a8", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "e740b06c-098f-4a7c-b0ff-1cefb77509a8", "title": "Mentor", "to": "2ab18543-81c3-4a4b-929f-39a4c827b454"}, {"from": "9189834b-b9f7-4870-ba10-b5bed43dfde4", "title": "Mentor", "to": "2ab18543-81c3-4a4b-929f-39a4c827b454"}, {"from": "9189834b-b9f7-4870-ba10-b5bed43dfde4", "title": "Mentor", "to": "1ae8eac1-4251-498c-bdbc-083b0e8d1553"}, {"from": "4926a56d-ab5b-4cab-88f3-023e26d6e699", "title": "Mentor", "to": "640a0a63-6fe7-48f7-81c8-c55399d151c2"}, {"from": "4926a56d-ab5b-4cab-88f3-023e26d6e699", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "1724fd80-5cf5-4dd9-a75c-eefb0a89dcbd", "title": "Mentor", "to": "2ab18543-81c3-4a4b-929f-39a4c827b454"}, {"from": "1724fd80-5cf5-4dd9-a75c-eefb0a89dcbd", "title": "Mentor", "to": "640a0a63-6fe7-48f7-81c8-c55399d151c2"}, {"from": "8ed2b916-5de0-4ace-94cb-ad5a23ff7cd4", "title": "Mentor", "to": "1ae8eac1-4251-498c-bdbc-083b0e8d1553"}, {"from": "8ed2b916-5de0-4ace-94cb-ad5a23ff7cd4", "title": "Mentor", "to": "640a0a63-6fe7-48f7-81c8-c55399d151c2"}, {"from": "eb68e57c-e72f-47af-8881-51f860f0e7e3", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "5ed40813-4365-4303-9bf9-de875407bca5", "title": "Mentor", "to": "9af42e76-4ba6-4ac7-8606-81b0f1c46abd"}, {"from": "5ed40813-4365-4303-9bf9-de875407bca5", "title": "Mentor", "to": "1ae8eac1-4251-498c-bdbc-083b0e8d1553"}, {"from": "342a3e1f-a5b9-459c-9b55-f57f4b614431", "title": "Mentor", "to": "640a0a63-6fe7-48f7-81c8-c55399d151c2"}, {"from": "342a3e1f-a5b9-459c-9b55-f57f4b614431", "title": "Mentor", "to": "1ae8eac1-4251-498c-bdbc-083b0e8d1553"}, {"from": "665f7aff-0b7b-4e9f-8b36-cd0e8738069f", "title": "Mentor", "to": "9af42e76-4ba6-4ac7-8606-81b0f1c46abd"}, {"from": "665f7aff-0b7b-4e9f-8b36-cd0e8738069f", "title": "Mentor", "to": "640a0a63-6fe7-48f7-81c8-c55399d151c2"}, {"from": "b5e21f61-319c-47e1-863e-5ddf3c60763e", "title": "Mentor", "to": "2ab18543-81c3-4a4b-929f-39a4c827b454"}, {"from": "b5e21f61-319c-47e1-863e-5ddf3c60763e", "title": "Mentor", "to": "640a0a63-6fe7-48f7-81c8-c55399d151c2"}, {"from": "8798e6d1-6f1a-4be9-a110-e07fcd9c60b9", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "0978e843-f532-4783-8aa1-34ed66eb42db", "title": "Mentor", "to": "640a0a63-6fe7-48f7-81c8-c55399d151c2"}, {"from": "3d2f4c7d-c1f3-4f08-a3a9-2e9576b712e7", "title": "Mentor", "to": "2ab18543-81c3-4a4b-929f-39a4c827b454"}, {"from": "3d2f4c7d-c1f3-4f08-a3a9-2e9576b712e7", "title": "Mentor", "to": "640a0a63-6fe7-48f7-81c8-c55399d151c2"}, {"from": "2c974246-75a1-4e46-831b-a765b1780cc9", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "2c974246-75a1-4e46-831b-a765b1780cc9", "title": "Mentor", "to": "9af42e76-4ba6-4ac7-8606-81b0f1c46abd"}, {"from": "f2586bda-4ada-4c4d-9c01-19c5dee0a679", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "f2586bda-4ada-4c4d-9c01-19c5dee0a679", "title": "Mentor", "to": "1ae8eac1-4251-498c-bdbc-083b0e8d1553"}, {"from": "c338a3d9-a8e2-4863-9361-db8ca8eed44e", "title": "Mentor", "to": "2ab18543-81c3-4a4b-929f-39a4c827b454"}, {"from": "c338a3d9-a8e2-4863-9361-db8ca8eed44e", "title": "Mentor", "to": "1ae8eac1-4251-498c-bdbc-083b0e8d1553"}, {"from": "a9c0764b-df83-468a-bcc7-8102220b6de7", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "a9c0764b-df83-468a-bcc7-8102220b6de7", "title": "Mentor", "to": "2ab18543-81c3-4a4b-929f-39a4c827b454"}, {"from": "73ede23f-30ea-4277-9d35-3ea02bcecd2c", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "73ede23f-30ea-4277-9d35-3ea02bcecd2c", "title": "Mentor", "to": "1ae8eac1-4251-498c-bdbc-083b0e8d1553"}, {"from": "5da9da41-334e-4702-aada-9b2c8a1570f9", "title": "Mentor", "to": "2ab18543-81c3-4a4b-929f-39a4c827b454"}, {"from": "1fce28e3-6858-44b9-9344-66ff0c33d512", "title": "Mentor", "to": "2ab18543-81c3-4a4b-929f-39a4c827b454"}, {"from": "1fce28e3-6858-44b9-9344-66ff0c33d512", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "51647975-63b7-4e13-a945-356bc415d885", "title": "Mentor", "to": "9af42e76-4ba6-4ac7-8606-81b0f1c46abd"}, {"from": "51647975-63b7-4e13-a945-356bc415d885", "title": "Mentor", "to": "640a0a63-6fe7-48f7-81c8-c55399d151c2"}, {"from": "f97f638c-7c4f-4f4a-87f7-b674351c5f75", "title": "Mentor", "to": "640a0a63-6fe7-48f7-81c8-c55399d151c2"}, {"from": "f97f638c-7c4f-4f4a-87f7-b674351c5f75", "title": "Mentor", "to": "9af42e76-4ba6-4ac7-8606-81b0f1c46abd"}, {"from": "63214f06-3f46-4481-a4f4-63ab5969f807", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "63214f06-3f46-4481-a4f4-63ab5969f807", "title": "Mentor", "to": "640a0a63-6fe7-48f7-81c8-c55399d151c2"}, {"from": "08ad2854-4491-4160-8e05-fdb5c594d664", "title": "Mentor", "to": "2ab18543-81c3-4a4b-929f-39a4c827b454"}, {"from": "197e3227-1faa-4301-825d-ed56320418d5", "title": "Mentor", "to": "640a0a63-6fe7-48f7-81c8-c55399d151c2"}, {"from": "197e3227-1faa-4301-825d-ed56320418d5", "title": "Mentor", "to": "86f9311a-264e-4c5b-8a5f-c49d2ff28483"}, {"from": "8247af42-3836-446e-b733-aab5b6f2d3b5", "title": "Mentor", "to": "2ab18543-81c3-4a4b-929f-39a4c827b454"}, {"from": "8247af42-3836-446e-b733-aab5b6f2d3b5", "title": "Mentor", "to": "1ae8eac1-4251-498c-bdbc-083b0e8d1553"}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {"physics": {"barnesHut": {"gravitationalConstant": -80000, "springConstant": 0.001, "springLength": 200}, "stabilization": {"enabled": false}}};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>

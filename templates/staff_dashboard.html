@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+            <div class="position-sticky pt-3">
+                <div class="user-info mb-4">
+                    <h5>{{ staff.name }}</h5>
+                    <p class="text-muted">{{ staff.department }}</p>
+                </div>
+                
+                <!-- Semester Selection -->
+                <div class="semester-selector mb-4">
+                    <h6 class="mb-3">Select Semester</h6>
+                    <div class="btn-group-vertical w-100" role="group">
+                        <button type="button" class="btn btn-outline-primary active" data-semester="all">All Semesters</button>
+                        {% for semester in range(1, 9) %}
+                        <button type="button" class="btn btn-outline-primary" data-semester="{{ semester }}">Semester {{ semester }}</button>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#overview">
+                            <i class="fas fa-chart-line"></i> Overview
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#performance">
+                            <i class="fas fa-chart-bar"></i> Performance
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#network">
+                            <i class="fas fa-project-diagram"></i> Network View
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <!-- Overview Section -->
+            <div id="overview" class="section">
+                <h2 class="my-4">Department Overview</h2>
+                
+                <!-- KPI Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                        <div class="card kpi-card">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Students</h5>
+                                <h2 class="card-text">{{ kpis.total_students }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                        <div class="card kpi-card">
+                            <div class="card-body">
+                                <h5 class="card-title">Average CGPA</h5>
+                                <h2 class="card-text">{{ kpis.avg_cgpa }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+                        <div class="card kpi-card">
+                            <div class="card-body">
+                                <h5 class="card-title">Attendance Rate</h5>
+                                <h2 class="card-text">{{ kpis.attendance_rate }}%</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Department Performance Chart -->
+                <div class="row mb-4">
+                    <div class="col-12" data-aos="fade-up">
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="dept-chart" style="height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Animated Progress Chart -->
+                <div class="row mb-4">
+                    <div class="col-12" data-aos="fade-up">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Performance Progress</h5>
+                                <div id="progress-chart" style="height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Section -->
+            <div id="performance" class="section">
+                <h2 class="my-4">Performance Analysis</h2>
+                
+                <!-- Top Row -->
+                <div class="row mb-4">
+                    <div class="col-md-6" data-aos="fade-right">
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="subject-chart" style="height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6" data-aos="fade-left">
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="top-chart" style="height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Middle Row -->
+                <div class="row mb-4">
+                    <div class="col-md-6" data-aos="fade-right">
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="semester-chart" style="height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6" data-aos="fade-left">
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="heatmap-chart" style="height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Row -->
+                <div class="row mb-4">
+                    <div class="col-12" data-aos="fade-up">
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="radar-chart" style="height: 500px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Animated Charts Row -->
+                <div class="row mb-4">
+                    <div class="col-md-6" data-aos="fade-right">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Student Performance Animation</h5>
+                                <div id="scatter-chart" style="height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6" data-aos="fade-left">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Subject Performance Animation</h5>
+                                <div id="bar-chart" style="height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network View Section -->
+            <div id="network" class="section">
+                <h2 class="my-4">Student-Staff Network</h2>
+                <div class="card" data-aos="fade-up">
+                    <div class="card-body">
+                        <iframe src="{{ network_path }}" style="width: 100%; height: 600px; border: none;"></iframe>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<style>
+.sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    padding: 48px 0 0;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+}
+
+.sidebar .nav-link {
+    font-weight: 500;
+    color: #333;
+    padding: 0.5rem 1rem;
+    margin: 0.2rem 0;
+    border-radius: 0.25rem;
+}
+
+.sidebar .nav-link:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.sidebar .nav-link.active {
+    color: #007bff;
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.sidebar .nav-link i {
+    margin-right: 0.5rem;
+}
+
+.semester-selector .btn {
+    text-align: left;
+    margin-bottom: 0.25rem;
+    border-radius: 0.25rem;
+}
+
+.semester-selector .btn.active {
+    background-color: #007bff;
+    color: white;
+}
+
+.kpi-card {
+    transition: transform 0.3s ease;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.kpi-card:hover {
+    transform: translateY(-5px);
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+}
+
+.section {
+    padding: 2rem 0;
+}
+
+@media (max-width: 767.98px) {
+    .sidebar {
+        position: static;
+        height: auto;
+        padding-top: 0;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize AOS
+    AOS.init({
+        duration: 800,
+        once: true
+    });
+
+    // Render charts
+    const plots = JSON.parse('{{ plots|safe }}');
+    
+    // Render static charts
+    Plotly.newPlot('dept-chart', JSON.parse(plots.dept).data, JSON.parse(plots.dept).layout);
+    Plotly.newPlot('subject-chart', JSON.parse(plots.subject).data, JSON.parse(plots.subject).layout);
+    Plotly.newPlot('top-chart', JSON.parse(plots.top).data, JSON.parse(plots.top).layout);
+    Plotly.newPlot('semester-chart', JSON.parse(plots.semester).data, JSON.parse(plots.semester).layout);
+    Plotly.newPlot('heatmap-chart', JSON.parse(plots.heatmap).data, JSON.parse(plots.heatmap).layout);
+    Plotly.newPlot('radar-chart', JSON.parse(plots.radar).data, JSON.parse(plots.radar).layout);
+    
+    // Render animated charts
+    if (plots.scatter) {
+        Plotly.newPlot('scatter-chart', JSON.parse(plots.scatter).data, JSON.parse(plots.scatter).layout);
+    }
+    
+    if (plots.bar) {
+        Plotly.newPlot('bar-chart', JSON.parse(plots.bar).data, JSON.parse(plots.bar).layout);
+    }
+    
+    if (plots.progress) {
+        Plotly.newPlot('progress-chart', JSON.parse(plots.progress).data, JSON.parse(plots.progress).layout);
+    }
+
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        Plotly.Plots.resize('dept-chart');
+        Plotly.Plots.resize('subject-chart');
+        Plotly.Plots.resize('top-chart');
+        Plotly.Plots.resize('semester-chart');
+        Plotly.Plots.resize('heatmap-chart');
+        Plotly.Plots.resize('radar-chart');
+        Plotly.Plots.resize('scatter-chart');
+        Plotly.Plots.resize('bar-chart');
+        Plotly.Plots.resize('progress-chart');
+    });
+
+    // Smooth scrolling for sidebar links
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+            targetElement.scrollIntoView({ behavior: 'smooth' });
+            
+            // Update active state
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+    
+    // Handle semester selection
+    document.querySelectorAll('.semester-selector .btn').forEach(button => {
+        button.addEventListener('click', function() {
+            // Update active state
+            document.querySelectorAll('.semester-selector .btn').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Get selected semester
+            const semester = this.getAttribute('data-semester');
+            
+            // Fetch data for selected semester
+            fetch('/api/refresh-stats', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ semester: semester })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update charts with new data
+                if (data.avg_chart) {
+                    const avgChart = JSON.parse(data.avg_chart);
+                    Plotly.newPlot('subject-chart', avgChart.data, avgChart.layout);
+                }
+                
+                if (data.top_chart) {
+                    const topChart = JSON.parse(data.top_chart);
+                    Plotly.newPlot('top-chart', topChart.data, topChart.layout);
+                }
+                
+                if (data.animated_charts && data.animated_charts.scatter) {
+                    const scatterChart = JSON.parse(data.animated_charts.scatter);
+                    Plotly.newPlot('scatter-chart', scatterChart.data, scatterChart.layout);
+                }
+                
+                if (data.animated_charts && data.animated_charts.bar) {
+                    const barChart = JSON.parse(data.animated_charts.bar);
+                    Plotly.newPlot('bar-chart', barChart.data, barChart.layout);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching semester data:', error);
+            });
+        });
+    });
+});
+</script>
+{% endblock %} 

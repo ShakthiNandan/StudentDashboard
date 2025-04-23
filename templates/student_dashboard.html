@@ -1,0 +1,580 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Mobile Toggle Button -->
+    <button class="sidebar-toggle d-md-none" id="sidebarToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+    
+    <div class="sidebar" id="sidebar">
+        <div class="user-info">
+            <div class="user-avatar">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <h3>{{ student.user.name }}</h3>
+            <p>Reg No: {{ student.reg_no }}</p>
+            <p>Department: {{ student.department }}</p>
+        </div>
+        
+        <!-- Semester Selection -->
+        <div class="semester-selector">
+            <h6>Select Semester</h6>
+            <div class="btn-group-vertical w-100" role="group">
+                <button type="button" class="btn btn-outline-primary active" data-semester="all">All Semesters</button>
+                {% for semester in range(1, 9) %}
+                <button type="button" class="btn btn-outline-primary" data-semester="{{ semester }}">Semester {{ semester }}</button>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <nav>
+            <ul>
+                <li><a href="#overview" class="active"><i class="fas fa-chart-pie"></i> Overview</a></li>
+                <li><a href="#performance"><i class="fas fa-chart-line"></i> Performance</a></li>
+                <li><a href="#network"><i class="fas fa-project-diagram"></i> Network View</a></li>
+            </ul>
+        </nav>
+    </div>
+    
+    <div class="main-content">
+        <!-- KPI Cards -->
+        <section id="overview" class="section">
+            <h2 class="section-title">Overview</h2>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card kpi-card" data-aos="fade-up">
+                        <div class="card-body text-center">
+                            <div class="kpi-icon">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <h5 class="card-title">CGPA</h5>
+                            <h2 class="display-4" id="cgpa-value">{{ kpis.cgpa }}</h2>
+                            <p class="text-muted">Cumulative GPA</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card kpi-card" data-aos="fade-up" data-aos-delay="100">
+                        <div class="card-body text-center">
+                            <div class="kpi-icon">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <h5 class="card-title">Attendance</h5>
+                            <h2 class="display-4" id="attendance-value">{{ kpis.attendance }}%</h2>
+                            <p class="text-muted">Overall Attendance</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card kpi-card" data-aos="fade-up" data-aos-delay="200">
+                        <div class="card-body text-center">
+                            <div class="kpi-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <h5 class="card-title">Current GPA</h5>
+                            <h2 class="display-4" id="current-semester-gpa">{{ kpis.current_semester_gpa }}</h2>
+                            <p class="text-muted">Current Semester GPA</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progress Chart -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card chart-card" data-aos="fade-up">
+                        <div class="card-body">
+                            <h5 class="card-title">Performance Progress</h5>
+                            <div id="progress-chart" class="chart-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Performance Charts -->
+        <section id="performance" class="section">
+            <h2 class="section-title">Performance Analysis</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card chart-card" data-aos="fade-right">
+                        <div class="card-body">
+                            <h5 class="card-title">Internal vs External Marks</h5>
+                            <div id="bar-chart" class="chart-container"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card chart-card" data-aos="fade-left">
+                        <div class="card-body">
+                            <h5 class="card-title">CGPA Trend</h5>
+                            <div id="line-chart" class="chart-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card chart-card" data-aos="fade-right">
+                        <div class="card-body">
+                            <h5 class="card-title">CGPA Gauge</h5>
+                            <div id="donut-chart" class="chart-container"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card chart-card" data-aos="fade-left">
+                        <div class="card-body">
+                            <h5 class="card-title">Marks Heatmap</h5>
+                            <div id="heatmap-chart" class="chart-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card chart-card" data-aos="fade-up">
+                        <div class="card-body">
+                            <h5 class="card-title">Current Semester Performance</h5>
+                            <div id="radar-chart" class="chart-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card chart-card" data-aos="fade-up">
+                        <div class="card-body">
+                            <h5 class="card-title">Marks Distribution</h5>
+                            <div id="box-chart" class="chart-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Animated Charts -->
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card chart-card" data-aos="fade-right">
+                        <div class="card-body">
+                            <h5 class="card-title">Performance Animation</h5>
+                            <div id="scatter-chart" class="chart-container"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card chart-card" data-aos="fade-left">
+                        <div class="card-body">
+                            <h5 class="card-title">Subject Performance Animation</h5>
+                            <div id="bar-animated-chart" class="chart-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Network View -->
+        <section id="network" class="section">
+            <h2 class="section-title">Student-Staff Network</h2>
+            <div class="card" data-aos="zoom-in">
+                <div class="card-body">
+                    <div class="network-container">
+                        <iframe src="{{ network_path }}" width="100%" height="600px" frameborder="0"></iframe>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<style>
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+    position: relative;
+}
+
+.sidebar {
+    width: 300px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-right: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.sidebar-toggle {
+    display: none;
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1001;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.user-info {
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.user-avatar {
+    font-size: 3rem;
+    color: #007bff;
+    margin-bottom: 10px;
+}
+
+.semester-selector {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.semester-selector h6 {
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.semester-selector .btn {
+    text-align: left;
+    margin-bottom: 5px;
+    border-radius: 5px;
+}
+
+.semester-selector .btn.active {
+    background-color: #007bff;
+    color: white;
+}
+
+.sidebar nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar nav ul li {
+    margin-bottom: 5px;
+}
+
+.sidebar nav ul li a {
+    display: block;
+    padding: 10px 15px;
+    color: #333;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: all 0.2s ease;
+}
+
+.sidebar nav ul li a:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.sidebar nav ul li a.active {
+    background-color: #007bff;
+    color: white;
+}
+
+.sidebar nav ul li a i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+}
+
+.main-content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.section {
+    margin-bottom: 40px;
+}
+
+.section-title {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f0f0f0;
+    color: #333;
+}
+
+.kpi-card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+    height: 100%;
+}
+
+.kpi-card:hover {
+    transform: translateY(-5px);
+}
+
+.kpi-icon {
+    font-size: 2rem;
+    color: #007bff;
+    margin-bottom: 10px;
+}
+
+.chart-card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    height: 100%;
+}
+
+.chart-container {
+    height: 400px;
+    width: 100%;
+}
+
+.network-container {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 768px) {
+    .sidebar-toggle {
+        display: block;
+    }
+    
+    .sidebar {
+        position: fixed;
+        left: -300px;
+        top: 0;
+        bottom: 0;
+        height: 100vh;
+        overflow-y: auto;
+    }
+    
+    .sidebar.active {
+        left: 0;
+    }
+    
+    .main-content {
+        padding-top: 60px;
+    }
+    
+    .kpi-card {
+        margin-bottom: 20px;
+    }
+    
+    .chart-card {
+        margin-bottom: 20px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize AOS
+    AOS.init({
+        duration: 800,
+        once: true
+    });
+    
+    // Toggle sidebar on mobile
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('active');
+        });
+    }
+    
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(event) {
+        if (window.innerWidth <= 768) {
+            if (!sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
+                sidebar.classList.remove('active');
+            }
+        }
+    });
+    
+    // Render all charts
+    const plotsData = {{ plots|tojson|safe }};
+    
+    // Render static charts
+    try {
+        if (plotsData.bar) {
+            const barData = JSON.parse(plotsData.bar);
+            Plotly.newPlot('bar-chart', barData.data, barData.layout);
+        }
+        if (plotsData.line) {
+            const lineData = JSON.parse(plotsData.line);
+            Plotly.newPlot('line-chart', lineData.data, lineData.layout);
+        }
+        if (plotsData.donut) {
+            const donutData = JSON.parse(plotsData.donut);
+            Plotly.newPlot('donut-chart', donutData.data, donutData.layout);
+        }
+        if (plotsData.heatmap) {
+            const heatmapData = JSON.parse(plotsData.heatmap);
+            Plotly.newPlot('heatmap-chart', heatmapData.data, heatmapData.layout);
+        }
+        if (plotsData.radar) {
+            const radarData = JSON.parse(plotsData.radar);
+            Plotly.newPlot('radar-chart', radarData.data, radarData.layout);
+        }
+        if (plotsData.box) {
+            const boxData = JSON.parse(plotsData.box);
+            Plotly.newPlot('box-chart', boxData.data, boxData.layout);
+        }
+        
+        // Render animated charts if available
+        if (plotsData.scatter) {
+            const scatterData = JSON.parse(plotsData.scatter);
+            Plotly.newPlot('scatter-chart', scatterData.data, scatterData.layout);
+        }
+        
+        if (plotsData.bar_animated) {
+            const barAnimatedData = JSON.parse(plotsData.bar_animated);
+            Plotly.newPlot('bar-animated-chart', barAnimatedData.data, barAnimatedData.layout);
+        }
+        
+        if (plotsData.progress) {
+            const progressData = JSON.parse(plotsData.progress);
+            Plotly.newPlot('progress-chart', progressData.data, progressData.layout);
+        }
+    } catch (error) {
+        console.error('Error rendering charts:', error);
+    }
+    
+    // Add resize handler for responsive charts
+    window.addEventListener('resize', function() {
+        const charts = document.querySelectorAll('.chart-container');
+        charts.forEach(chart => {
+            const plotId = chart.querySelector('div').id;
+            if (plotId) {
+                Plotly.Plots.resize(plotId);
+            }
+        });
+    });
+    
+    // Smooth scrolling for navigation
+    document.querySelectorAll('.sidebar nav a').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Update active state
+            document.querySelectorAll('.sidebar nav a').forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Close sidebar on mobile after clicking
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('active');
+            }
+            
+            // Scroll to section
+            const targetId = this.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+            targetElement.scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+    
+    // Handle semester selection
+    document.querySelectorAll('.semester-selector .btn').forEach(button => {
+        button.addEventListener('click', function() {
+            // Update active state
+            document.querySelectorAll('.semester-selector .btn').forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Get selected semester
+            const semester = this.getAttribute('data-semester');
+            
+            // Fetch data for selected semester
+            fetch('/api/student-refresh-stats', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    semester: semester,
+                    student_id: '{{ student.id }}'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                try {
+                    // Update charts with new data
+                    if (data.bar_chart) {
+                        const barChart = JSON.parse(data.bar_chart);
+                        Plotly.newPlot('bar-chart', barChart.data, barChart.layout);
+                    }
+                    
+                    if (data.line_chart) {
+                        const lineChart = JSON.parse(data.line_chart);
+                        Plotly.newPlot('line-chart', lineChart.data, lineChart.layout);
+                    }
+                    
+                    if (data.donut_chart) {
+                        const donutChart = JSON.parse(data.donut_chart);
+                        Plotly.newPlot('donut-chart', donutChart.data, donutChart.layout);
+                    }
+                    
+                    if (data.heatmap_chart) {
+                        const heatmapChart = JSON.parse(data.heatmap_chart);
+                        Plotly.newPlot('heatmap-chart', heatmapChart.data, heatmapChart.layout);
+                    }
+                    
+                    if (data.radar_chart) {
+                        const radarChart = JSON.parse(data.radar_chart);
+                        Plotly.newPlot('radar-chart', radarChart.data, radarChart.layout);
+                    }
+                    
+                    if (data.box_chart) {
+                        const boxChart = JSON.parse(data.box_chart);
+                        Plotly.newPlot('box-chart', boxChart.data, boxChart.layout);
+                    }
+                    
+                    if (data.scatter_chart) {
+                        const scatterChart = JSON.parse(data.scatter_chart);
+                        Plotly.newPlot('scatter-chart', scatterChart.data, scatterChart.layout);
+                    }
+                    
+                    if (data.bar_animated_chart) {
+                        const barAnimatedChart = JSON.parse(data.bar_animated_chart);
+                        Plotly.newPlot('bar-animated-chart', barAnimatedChart.data, barAnimatedChart.layout);
+                    }
+                    
+                    if (data.progress_chart) {
+                        const progressChart = JSON.parse(data.progress_chart);
+                        Plotly.newPlot('progress-chart', progressChart.data, progressChart.layout);
+                    }
+                    
+                    // Update KPIs if available
+                    if (data.kpis) {
+                        document.getElementById('cgpa-value').textContent = data.kpis.cgpa;
+                        document.getElementById('attendance-value').textContent = data.kpis.attendance + '%';
+                        document.getElementById('current-semester-gpa').textContent = data.kpis.current_semester_gpa;
+                    }
+                } catch (error) {
+                    console.error('Error updating charts:', error);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching semester data:', error);
+            });
+        });
+    });
+});
+</script>
+{% endblock %} 
