@@ -253,9 +253,22 @@ def create_bokeh_app():
 
 # Start Bokeh server in a separate thread
 def start_bokeh_server():
-    server = Server({'/bokeh': create_bokeh_app()}, io_loop=IOLoop())
-    server.start()
-    server.io_loop.start()
+    """Start the Bokeh server on a dynamically allocated port to avoid conflicts."""
+    try:
+        # Try using a specific port first, but if it fails, try with port=0 to auto-assign
+        try:
+            server = Server({'/bokeh': create_bokeh_app()}, io_loop=IOLoop())
+            server.start()
+            server.io_loop.start()
+        except OSError:
+            # If the default port is in use, try to use a random available port
+            print("Warning: Default Bokeh port is in use. Trying with a random port...")
+            server = Server({'/bokeh': create_bokeh_app()}, io_loop=IOLoop(), port=0)
+            server.start()
+            server.io_loop.start()
+    except Exception as e:
+        print(f"Failed to start Bokeh server: {e}")
+        # Continue without Bokeh server
 
 # Start Bokeh server in a separate thread
 bokeh_thread = threading.Thread(target=start_bokeh_server)
@@ -536,7 +549,7 @@ def student_dashboard(id):
 
 @app.route('/api/student-refresh-stats', methods=['POST'])
 def student_refresh_stats():
-    # Endpoint for student dashboard data refresh
+    """Endpoint for student dashboard data refresh"""
     data = request.json
     semester = data.get('semester')
     student_id = data.get('student_id')
@@ -544,255 +557,260 @@ def student_refresh_stats():
     if not semester or not student_id:
         return jsonify({'error': 'Semester and student_id required'}), 400
     
-    # Get student
-    student = Student.query.get_or_404(student_id)
-    
-    # Get all marks for the student
-    all_marks = Mark.query.filter_by(student_id=student.id).all()
-    
-    # Create DataFrame for all marks
-    df = pd.DataFrame([{
-        'semester': m.semester,
-        'subject': m.subject,
-        'internal': m.internal,
-        'external': m.external,
-        'total': m.total
-    } for m in all_marks])
-    
-    # Filter by semester if not 'all'
-    if semester != 'all':
-        df = df[df['semester'] == int(semester)]
-    
-    # Calculate KPIs
-    total_marks = df['total'].tolist()
-    cgpa = sum(total_marks) / (len(total_marks) * 100) * 10 if total_marks else 0
-    current_semester = max(df['semester'].unique()) if not df.empty else 0
-    current_semester_marks = df[df['semester'] == current_semester]['total'].tolist()
-    current_semester_gpa = sum(current_semester_marks) / (len(current_semester_marks) * 100) * 10 if current_semester_marks else 0
-    
-    # 1. Grouped Bar Chart (Internal vs External)
-    fig_bar = px.bar(
-        df,
-        x='subject',
-        y=['internal', 'external'],
-        title='Internal vs External Marks by Subject',
-        barmode='group',
-        color_discrete_sequence=['#2ecc71', '#3498db']
-    )
-    fig_bar.update_layout(
-        xaxis_title='Subject',
-        yaxis_title='Marks',
-        template='plotly_white'
-    )
-    
-    # 2. Line Chart (CGPA Trend)
-    semester_gpa = df.groupby('semester')['total'].mean().reset_index()
-    semester_gpa['gpa'] = semester_gpa['total'] / 10
-    fig_line = px.line(
-        semester_gpa,
-        x='semester',
-        y='gpa',
-        title='CGPA Trend Across Semesters',
-        markers=True
-    )
-    fig_line.update_layout(
-        xaxis_title='Semester',
-        yaxis_title='GPA',
-        template='plotly_white'
-    )
-    
-    # 3. Donut Chart (CGPA Gauge)
-    fig_donut = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=cgpa,
-        title={'text': "CGPA"},
-        gauge={
-            'axis': {'range': [0, 10]},
-            'bar': {'color': "#2ecc71"},
-            'steps': [
-                {'range': [0, 6], 'color': "#e74c3c"},
-                {'range': [6, 8], 'color': "#f1c40f"},
-                {'range': [8, 10], 'color': "#2ecc71"}
-            ]
-        }
-    ))
-    fig_donut.update_layout(template='plotly_white')
-    
-    # 4. Heatmap
-    pivot_df = df.pivot(index='subject', columns='semester', values='total')
-    fig_heatmap = px.imshow(
-        pivot_df,
-        title='Marks Heatmap (Subjects × Semesters)',
-        color_continuous_scale='RdYlGn'
-    )
-    fig_heatmap.update_layout(
-        xaxis_title='Semester',
-        yaxis_title='Subject',
-        template='plotly_white'
-    )
-    
-    # 5. Radar Chart (Current Semester)
-    current_semester_df = df[df['semester'] == current_semester]
-    fig_radar = go.Figure()
-    fig_radar.add_trace(go.Scatterpolar(
-        r=current_semester_df['total'],
-        theta=current_semester_df['subject'],
-        fill='toself',
-        name='Current Semester'
-    ))
-    fig_radar.update_layout(
-        polar=dict(
-            radialaxis=dict(
-                visible=True,
-                range=[0, 100]
-            )
-        ),
-        title='Current Semester Performance',
-        template='plotly_white'
-    )
-    
-    # 6. Box Plot
-    fig_box = px.box(
-        df,
-        x='semester',
-        y='total',
-        title='Marks Distribution by Semester'
-    )
-    fig_box.update_layout(
-        xaxis_title='Semester',
-        yaxis_title='Total Marks',
-        template='plotly_white'
-    )
-    
-    # 7. Animated Scatter Plot (Performance Animation)
-    fig_scatter = px.scatter(
-        df,
-        x='semester',
-        y='total',
-        animation_frame='semester',
-        animation_group='subject',
-        size='total',
-        color='subject',
-        title='Performance Across Semesters'
-    )
-    fig_scatter.update_layout(
-        updatemenus=[
-            dict(
-                type="buttons",
-                buttons=[
-                    dict(
-                        label="Play",
-                        method="animate",
-                        args=[None, {
-                            "frame": {"duration": 1000, "redraw": True},
-                            "mode": "immediate",
-                            "fromcurrent": True
-                        }]
-                    ),
-                    dict(
-                        label="Pause",
-                        method="animate",
-                        args=[[None], {
-                            "frame": {"duration": 0, "redraw": False},
-                            "mode": "immediate",
-                            "fromcurrent": True
-                        }]
-                    )
-                ],
-                direction="left",
-                pad={"r": 10, "t": 87},
-                showactive=True,
-                x=0.1,
-                xanchor="right",
-                y=0,
-                yanchor="top"
-            )
-        ]
-    )
-    
-    # 8. Animated Bar Chart (Subject Performance)
-    fig_bar_animated = px.bar(
-        df,
-        x='subject',
-        y='total',
-        animation_frame='semester',
-        title='Subject Performance Across Semesters'
-    )
-    fig_bar_animated.update_layout(
-        updatemenus=[
-            dict(
-                type="buttons",
-                buttons=[
-                    dict(
-                        label="Play",
-                        method="animate",
-                        args=[None, {
-                            "frame": {"duration": 1000, "redraw": True},
-                            "mode": "immediate",
-                            "fromcurrent": True
-                        }]
-                    ),
-                    dict(
-                        label="Pause",
-                        method="animate",
-                        args=[[None], {
-                            "frame": {"duration": 0, "redraw": False},
-                            "mode": "immediate",
-                            "fromcurrent": True
-                        }]
-                    )
-                ],
-                direction="left",
-                pad={"r": 10, "t": 87},
-                showactive=True,
-                x=0.1,
-                xanchor="right",
-                y=0,
-                yanchor="top"
-            )
-        ]
-    )
-    
-    # 9. Progress Chart (Cumulative Performance)
-    # Calculate cumulative average for each subject across semesters
-    subject_progress = df.groupby(['subject', 'semester'])['total'].mean().reset_index()
-    subject_progress = subject_progress.sort_values(['subject', 'semester'])
-    subject_progress['cumulative_avg'] = subject_progress.groupby('subject')['total'].transform('cumsum') / subject_progress.groupby('subject')['semester'].transform('count')
-    
-    fig_progress = px.line(
-        subject_progress,
-        x='semester',
-        y='cumulative_avg',
-        color='subject',
-        title='Subject Progress Over Time',
-        labels={'cumulative_avg': 'Cumulative Average', 'semester': 'Semester'}
-    )
-    fig_progress.update_layout(
-        template='plotly_white',
-        legend=dict(
-            yanchor="top",
-            y=0.99,
-            xanchor="left",
-            x=0.01
+    try:
+        # Convert string ID to UUID object
+        student_uuid = uuid.UUID(student_id)
+        # Get student
+        student = Student.query.get_or_404(student_uuid)
+        
+        # Get all marks for the student
+        all_marks = Mark.query.filter_by(student_id=student.id).all()
+        
+        # Create DataFrame for all marks
+        df = pd.DataFrame([{
+            'semester': m.semester,
+            'subject': m.subject,
+            'internal': m.internal,
+            'external': m.external,
+            'total': m.total
+        } for m in all_marks])
+        
+        # Filter by semester if not 'all'
+        if semester != 'all':
+            df = df[df['semester'] == int(semester)]
+        
+        # Calculate KPIs
+        total_marks = df['total'].tolist()
+        cgpa = sum(total_marks) / (len(total_marks) * 100) * 10 if total_marks else 0
+        current_semester = max(df['semester'].unique()) if not df.empty else 0
+        current_semester_marks = df[df['semester'] == current_semester]['total'].tolist()
+        current_semester_gpa = sum(current_semester_marks) / (len(current_semester_marks) * 100) * 10 if current_semester_marks else 0
+        
+        # 1. Grouped Bar Chart (Internal vs External)
+        fig_bar = px.bar(
+            df,
+            x='subject',
+            y=['internal', 'external'],
+            title='Internal vs External Marks by Subject',
+            barmode='group',
+            color_discrete_sequence=['#2ecc71', '#3498db']
         )
-    )
-    
-    return jsonify({
-        'bar_chart': json.dumps(fig_bar, cls=plotly.utils.PlotlyJSONEncoder),
-        'line_chart': json.dumps(fig_line, cls=plotly.utils.PlotlyJSONEncoder),
-        'donut_chart': json.dumps(fig_donut, cls=plotly.utils.PlotlyJSONEncoder),
-        'heatmap_chart': json.dumps(fig_heatmap, cls=plotly.utils.PlotlyJSONEncoder),
-        'radar_chart': json.dumps(fig_radar, cls=plotly.utils.PlotlyJSONEncoder),
-        'box_chart': json.dumps(fig_box, cls=plotly.utils.PlotlyJSONEncoder),
-        'scatter_chart': json.dumps(fig_scatter, cls=plotly.utils.PlotlyJSONEncoder),
-        'bar_animated_chart': json.dumps(fig_bar_animated, cls=plotly.utils.PlotlyJSONEncoder),
-        'progress_chart': json.dumps(fig_progress, cls=plotly.utils.PlotlyJSONEncoder),
-        'kpis': {
-            'cgpa': round(cgpa, 2),
-            'attendance': 95,  # This should be calculated from actual attendance data
-            'current_semester_gpa': round(current_semester_gpa, 2)
-        }
-    })
+        fig_bar.update_layout(
+            xaxis_title='Subject',
+            yaxis_title='Marks',
+            template='plotly_white'
+        )
+        
+        # 2. Line Chart (CGPA Trend)
+        semester_gpa = df.groupby('semester')['total'].mean().reset_index()
+        semester_gpa['gpa'] = semester_gpa['total'] / 10
+        fig_line = px.line(
+            semester_gpa,
+            x='semester',
+            y='gpa',
+            title='CGPA Trend Across Semesters',
+            markers=True
+        )
+        fig_line.update_layout(
+            xaxis_title='Semester',
+            yaxis_title='GPA',
+            template='plotly_white'
+        )
+        
+        # 3. Donut Chart (CGPA Gauge)
+        fig_donut = go.Figure(go.Indicator(
+            mode="gauge+number",
+            value=cgpa,
+            title={'text': "CGPA"},
+            gauge={
+                'axis': {'range': [0, 10]},
+                'bar': {'color': "#2ecc71"},
+                'steps': [
+                    {'range': [0, 6], 'color': "#e74c3c"},
+                    {'range': [6, 8], 'color': "#f1c40f"},
+                    {'range': [8, 10], 'color': "#2ecc71"}
+                ]
+            }
+        ))
+        fig_donut.update_layout(template='plotly_white')
+        
+        # 4. Heatmap
+        pivot_df = df.pivot(index='subject', columns='semester', values='total')
+        fig_heatmap = px.imshow(
+            pivot_df,
+            title='Marks Heatmap (Subjects × Semesters)',
+            color_continuous_scale='RdYlGn'
+        )
+        fig_heatmap.update_layout(
+            xaxis_title='Semester',
+            yaxis_title='Subject',
+            template='plotly_white'
+        )
+        
+        # 5. Radar Chart (Current Semester)
+        current_semester_df = df[df['semester'] == current_semester]
+        fig_radar = go.Figure()
+        fig_radar.add_trace(go.Scatterpolar(
+            r=current_semester_df['total'],
+            theta=current_semester_df['subject'],
+            fill='toself',
+            name='Current Semester'
+        ))
+        fig_radar.update_layout(
+            polar=dict(
+                radialaxis=dict(
+                    visible=True,
+                    range=[0, 100]
+                )
+            ),
+            title='Current Semester Performance',
+            template='plotly_white'
+        )
+        
+        # 6. Box Plot
+        fig_box = px.box(
+            df,
+            x='semester',
+            y='total',
+            title='Marks Distribution by Semester'
+        )
+        fig_box.update_layout(
+            xaxis_title='Semester',
+            yaxis_title='Total Marks',
+            template='plotly_white'
+        )
+        
+        # 7. Animated Scatter Plot (Performance Animation)
+        fig_scatter = px.scatter(
+            df,
+            x='semester',
+            y='total',
+            animation_frame='semester',
+            animation_group='subject',
+            size='total',
+            color='subject',
+            title='Performance Across Semesters'
+        )
+        fig_scatter.update_layout(
+            updatemenus=[
+                dict(
+                    type="buttons",
+                    buttons=[
+                        dict(
+                            label="Play",
+                            method="animate",
+                            args=[None, {
+                                "frame": {"duration": 1000, "redraw": True},
+                                "mode": "immediate",
+                                "fromcurrent": True
+                            }]
+                        ),
+                        dict(
+                            label="Pause",
+                            method="animate",
+                            args=[[None], {
+                                "frame": {"duration": 0, "redraw": False},
+                                "mode": "immediate",
+                                "fromcurrent": True
+                            }]
+                        )
+                    ],
+                    direction="left",
+                    pad={"r": 10, "t": 87},
+                    showactive=True,
+                    x=0.1,
+                    xanchor="right",
+                    y=0,
+                    yanchor="top"
+                )
+            ]
+        )
+        
+        # 8. Animated Bar Chart (Subject Performance)
+        fig_bar_animated = px.bar(
+            df,
+            x='subject',
+            y='total',
+            animation_frame='semester',
+            title='Subject Performance Across Semesters'
+        )
+        fig_bar_animated.update_layout(
+            updatemenus=[
+                dict(
+                    type="buttons",
+                    buttons=[
+                        dict(
+                            label="Play",
+                            method="animate",
+                            args=[None, {
+                                "frame": {"duration": 1000, "redraw": True},
+                                "mode": "immediate",
+                                "fromcurrent": True
+                            }]
+                        ),
+                        dict(
+                            label="Pause",
+                            method="animate",
+                            args=[[None], {
+                                "frame": {"duration": 0, "redraw": False},
+                                "mode": "immediate",
+                                "fromcurrent": True
+                            }]
+                        )
+                    ],
+                    direction="left",
+                    pad={"r": 10, "t": 87},
+                    showactive=True,
+                    x=0.1,
+                    xanchor="right",
+                    y=0,
+                    yanchor="top"
+                )
+            ]
+        )
+        
+        # 9. Progress Chart (Cumulative Performance)
+        # Calculate cumulative average for each subject across semesters
+        subject_progress = df.groupby(['subject', 'semester'])['total'].mean().reset_index()
+        subject_progress = subject_progress.sort_values(['subject', 'semester'])
+        subject_progress['cumulative_avg'] = subject_progress.groupby('subject')['total'].transform('cumsum') / subject_progress.groupby('subject')['semester'].transform('count')
+        
+        fig_progress = px.line(
+            subject_progress,
+            x='semester',
+            y='cumulative_avg',
+            color='subject',
+            title='Subject Progress Over Time',
+            labels={'cumulative_avg': 'Cumulative Average', 'semester': 'Semester'}
+        )
+        fig_progress.update_layout(
+            template='plotly_white',
+            legend=dict(
+                yanchor="top",
+                y=0.99,
+                xanchor="left",
+                x=0.01
+            )
+        )
+        
+        return jsonify({
+            'bar_chart': json.dumps(fig_bar, cls=plotly.utils.PlotlyJSONEncoder),
+            'line_chart': json.dumps(fig_line, cls=plotly.utils.PlotlyJSONEncoder),
+            'donut_chart': json.dumps(fig_donut, cls=plotly.utils.PlotlyJSONEncoder),
+            'heatmap_chart': json.dumps(fig_heatmap, cls=plotly.utils.PlotlyJSONEncoder),
+            'radar_chart': json.dumps(fig_radar, cls=plotly.utils.PlotlyJSONEncoder),
+            'box_chart': json.dumps(fig_box, cls=plotly.utils.PlotlyJSONEncoder),
+            'scatter_chart': json.dumps(fig_scatter, cls=plotly.utils.PlotlyJSONEncoder),
+            'bar_animated_chart': json.dumps(fig_bar_animated, cls=plotly.utils.PlotlyJSONEncoder),
+            'progress_chart': json.dumps(fig_progress, cls=plotly.utils.PlotlyJSONEncoder),
+            'kpis': {
+                'cgpa': round(cgpa, 2),
+                'attendance': 95,  # This should be calculated from actual attendance data
+                'current_semester_gpa': round(current_semester_gpa, 2)
+            }
+        })
+    except ValueError:
+        return jsonify({'error': 'Invalid student ID format'}), 400
 
 @app.route('/dashboard/staff/<uuid:id>')
 def staff_dashboard(id):

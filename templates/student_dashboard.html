@@ -26,6 +26,9 @@
                 <button type="button" class="btn btn-outline-primary" data-semester="{{ semester }}">Semester {{ semester }}</button>
                 {% endfor %}
             </div>
+            <div class="mt-2 text-center">
+                <span id="current-filter-indicator" class="badge bg-primary">Viewing All Semesters</span>
+            </div>
         </div>
         
         <nav>
@@ -500,6 +503,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // Get selected semester
             const semester = this.getAttribute('data-semester');
             
+            // Update filter indicator
+            const filterIndicator = document.getElementById('current-filter-indicator');
+            filterIndicator.textContent = semester === 'all' ? 'Viewing All Semesters' : `Viewing Semester ${semester}`;
+            
             // Fetch data for selected semester
             fetch('/api/student-refresh-stats', {
                 method: 'POST',
@@ -577,4 +584,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-{% endblock %} 
+{% endblock %}

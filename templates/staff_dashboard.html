@@ -20,6 +20,9 @@
                         <button type="button" class="btn btn-outline-primary" data-semester="{{ semester }}">Semester {{ semester }}</button>
                         {% endfor %}
                     </div>
+                    <div class="mt-2 text-center">
+                        <span id="current-filter-indicator" class="badge bg-primary">Viewing All Semesters</span>
+                    </div>
                 </div>
                 
                 <ul class="nav flex-column">
@@ -432,6 +435,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Get selected semester
             const semester = this.getAttribute('data-semester');
+            
+            // Update filter indicator
+            const filterIndicator = document.getElementById('current-filter-indicator');
+            if (filterIndicator) {
+                filterIndicator.textContent = semester === 'all' ? 'Viewing All Semesters' : `Viewing Semester ${semester}`;
+            }
             
             // Show loading state
             const chartElements = document.querySelectorAll('[id$="-chart"]');
