@@ -55,6 +55,7 @@
   overflow: hidden;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  min-height: 300px;
 }
 
 .chart-container:hover {
@@ -99,4 +100,135 @@
   .network-container {
     height: 400px;
   }
-} 
+}
+
+/* Custom responsive styles */
+body {
+  overflow-x: hidden;
+}
+
+/* Improved container responsiveness */
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+  flex-direction: row;
+}
+
+/* Sidebar responsive handling */
+.sidebar {
+  width: 300px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-right: 1px solid #dee2e6;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  height: 100vh;
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
+}
+
+/* Improved mobile experience */
+@media (max-width: 992px) {
+  .dashboard-container {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    margin-bottom: 20px;
+  }
+  
+  .chart-container {
+    height: 350px; /* Slightly smaller on medium screens */
+  }
+  
+  .kpi-card {
+    margin-bottom: 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar-toggle {
+    display: block;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1010;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+  
+  .sidebar {
+    position: fixed;
+    left: -100%;
+    top: 0;
+    bottom: 0;
+    width: 85%;
+    max-width: 300px;
+    z-index: 1009;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  }
+  
+  .sidebar.active {
+    left: 0;
+  }
+  
+  .main-content {
+    width: 100%;
+    padding: 15px;
+    padding-top: 60px;
+  }
+  
+  .chart-container {
+    height: 300px; /* Even smaller on mobile */
+  }
+  
+  /* Adjust KPI cards for better mobile display */
+  .kpi-card {
+    margin-bottom: 10px;
+  }
+  
+  /* Ensure font sizes are readable on mobile */
+  h2.section-title {
+    font-size: 1.5rem;
+  }
+  
+  .card-title {
+    font-size: 1.1rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  .sidebar, .sidebar-toggle, .btn-group-vertical, .toast, .fixed-action-buttons {
+    display: none !important;
+  }
+  
+  .main-content {
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  .chart-container {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    height: 300px !important;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .chart-container {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+}

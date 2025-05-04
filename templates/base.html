@@ -19,6 +19,9 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
     <style>
+        body {
+            overflow-x: hidden;
+        }
         .sidebar {
             height: 100vh;
             position: fixed;
@@ -27,10 +30,14 @@
             padding-top: 60px;
             background-color: #f8f9fa;
             border-right: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+            width: 250px;
+            z-index: 999;
         }
         .main-content {
             margin-left: 250px;
             padding: 20px;
+            transition: all 0.3s ease;
         }
         .navbar {
             position: fixed;
@@ -39,9 +46,69 @@
         }
         .chart-container {
             margin-bottom: 30px;
+            width: 100%;
+            height: 400px;
         }
         .semester-card {
             margin-bottom: 20px;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 991.98px) {
+            .sidebar {
+                width: 200px;
+            }
+            .main-content {
+                margin-left: 200px;
+            }
+        }
+        
+        @media (max-width: 767.98px) {
+            .sidebar {
+                left: -250px;
+                box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            }
+            .sidebar.active {
+                left: 0;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+                width: 100%;
+            }
+            .chart-container {
+                height: 350px;
+            }
+        }
+        
+        @media (max-width: 575.98px) {
+            .chart-container {
+                height: 300px;
+            }
+            .main-content {
+                padding: 10px;
+            }
+        }
+        
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1010;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: #007bff;
+            color: white;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        @media (max-width: 767.98px) {
+            .sidebar-toggle {
+                display: block;
+            }
         }
     </style>
 </head>
