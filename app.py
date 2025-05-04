@@ -36,24 +36,25 @@ def create_app():
 
 app = create_app()
 
-def create_animated_charts(marks_data, semester):
-    # Create DataFrame for plotting
-    df = pd.DataFrame(marks_data)
+def create_animated_charts(data, semester):
+    """Create animated charts for staff dashboard."""
+    df = pd.DataFrame(data)
     
-    # Animated scatter plot
-    scatter_fig = px.scatter(
-        df, 
-        x="subject", 
-        y="total", 
-        animation_frame="semester", 
-        animation_group="student", 
-        size="total",
-        color="subject",
-        title=f"Student Performance Across Semesters"
+    # Animated Scatter Plot
+    fig_scatter = px.scatter(
+        df,
+        x='semester',
+        y='total',
+        animation_frame='semester',
+        animation_group='student',
+        size='total',
+        color='subject',
+        title='Student Performance Across Semesters',
+        template='plotly_white'
     )
-    
-    # Add play/pause button with proper configuration
-    scatter_fig.update_layout(
+    fig_scatter.update_layout(
+        xaxis_title='Semester',
+        yaxis_title='Total Marks',
         updatemenus=[
             dict(
                 type="buttons",
@@ -76,29 +77,24 @@ def create_animated_charts(marks_data, semester):
                             "fromcurrent": True
                         }]
                     )
-                ],
-                direction="left",
-                pad={"r": 10, "t": 87},
-                showactive=True,
-                x=0.1,
-                xanchor="right",
-                y=0,
-                yanchor="top"
+                ]
             )
         ]
     )
     
-    # Animated bar chart with proper animation controls
-    bar_fig = px.bar(
-        df, 
-        x="subject", 
-        y="total", 
-        animation_frame="semester",
-        title=f"Subject Performance Across Semesters"
+    # Animated Bar Chart
+    fig_bar = px.bar(
+        df,
+        x='subject',
+        y='total',
+        animation_frame='semester',
+        color='subject',
+        title='Subject Performance Across Semesters',
+        template='plotly_white'
     )
-    
-    # Add play/pause button with proper configuration
-    bar_fig.update_layout(
+    fig_bar.update_layout(
+        xaxis_title='Subject',
+        yaxis_title='Total Marks',
         updatemenus=[
             dict(
                 type="buttons",
@@ -121,30 +117,30 @@ def create_animated_charts(marks_data, semester):
                             "fromcurrent": True
                         }]
                     )
-                ],
-                direction="left",
-                pad={"r": 10, "t": 87},
-                showactive=True,
-                x=0.1,
-                xanchor="right",
-                y=0,
-                yanchor="top"
+                ]
             )
         ]
     )
     
     return {
-        'scatter': json.dumps(scatter_fig, cls=plotly.utils.PlotlyJSONEncoder),
-        'bar': json.dumps(bar_fig, cls=plotly.utils.PlotlyJSONEncoder)
+        'scatter': json.dumps(fig_scatter, cls=plotly.utils.PlotlyJSONEncoder),
+        'bar': json.dumps(fig_bar, cls=plotly.utils.PlotlyJSONEncoder)
     }
 
 def create_network_diagram():
-    # Create a sample network (student-staff mentorship)
-    net = Network(height="500px", width="100%", notebook=False)
+    """Create a network visualization of student-staff relationships."""
+    
+    # Create network visualization
+    net = Network(height="500px", width="100%", notebook=False, directed=False)
     
     # Add nodes for students and staff
     students = Student.query.all()
     staff = User.query.filter_by(role='staff').all()
+    
+    # Ensure static directory exists
+    static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+    if not os.path.exists(static_dir):
+        os.makedirs(static_dir)
     
     # Add student nodes
     for student in students:
@@ -152,16 +148,21 @@ def create_network_diagram():
             str(student.id), 
             label=student.user.name, 
             title=f"Student: {student.user.name}<br>Reg No: {student.reg_no}<br>Department: {student.department}",
-            color="#97c2fc"
+            color="#97c2fc",
+            shape="dot",
+            size=15
         )
     
     # Add staff nodes
     for staff_member in staff:
+        department = getattr(staff_member, 'department', 'Not specified')
         net.add_node(
             str(staff_member.id), 
             label=staff_member.name, 
-            title=f"Staff: {staff_member.name}",
-            color="#ff9999"
+            title=f"Staff: {staff_member.name}<br>Department: {department}",
+            color="#ff9999",
+            shape="star",
+            size=25
         )
     
     # Add edges (random mentorship for demonstration)
@@ -170,7 +171,13 @@ def create_network_diagram():
         num_mentors = random.randint(1, 2)
         mentors = random.sample(staff, min(num_mentors, len(staff)))
         for mentor in mentors:
-            net.add_edge(str(student.id), str(mentor.id), title="Mentor")
+            net.add_edge(
+                str(student.id), 
+                str(mentor.id), 
+                title="Mentor", 
+                color="#CCCCCC",
+                width=2
+            )
     
     # Enable physics for animation
     net.set_options("""
@@ -182,16 +189,22 @@ def create_network_diagram():
           "springLength": 200
         },
         "stabilization": {
-          "enabled": false
+          "enabled": true,
+          "iterations": 1000
         }
+      },
+      "interaction": {
+        "navigationButtons": true,
+        "keyboard": true
       }
     }
     """)
     
-    # Save to HTML file
-    net.save_graph("static/network.html")
+    # Save to HTML file with absolute path
+    network_path = os.path.join(static_dir, 'network.html')
+    net.save_graph(network_path)
     
-    return "static/network.html"
+    return "/static/network.html"
 
 def create_bokeh_app():
     # Create a Bokeh app for live GPA streaming
@@ -783,125 +796,208 @@ def student_refresh_stats():
 
 @app.route('/dashboard/staff/<uuid:id>')
 def staff_dashboard(id):
+    """Render the staff dashboard with analytics and visualization."""
+    # Get staff user
     staff = User.query.get_or_404(id)
     students = Student.query.all()
     
     # Create network diagram
     network_path = create_network_diagram()
     
-    # Calculate department-wide KPIs
+    # Get all marks and create DataFrame with proper type conversion
     all_marks = Mark.query.all()
-    total_students = len(students)
-    avg_cgpa = sum(m.total for m in all_marks) / (len(all_marks) * 100) * 10 if all_marks else 0
-    attendance_rate = 95  # This should be calculated from actual attendance data
-    
-    # Create DataFrame for all marks
     df = pd.DataFrame([{
-        'student': m.student.user.name,
+        'student_id': str(m.student.id),
+        'student_name': m.student.user.name,
         'subject': m.subject,
+        'internal': float(m.internal),
+        'external': float(m.external),
         'total': float(m.total),
         'semester': m.semester,
         'department': m.student.department
     } for m in all_marks])
     
-    # 1. Department Performance Chart
-    dept_performance = df.groupby('department')['total'].mean().reset_index()
-    fig_dept = px.bar(
-        dept_performance,
-        x='department',
-        y='total',
-        title='Department Performance Overview',
-        color='department',
-        color_discrete_sequence=px.colors.qualitative.Set3
-    )
+    # Calculate KPIs
+    total_students = len(students)
+    avg_cgpa = df['total'].mean() / 10 if not df.empty else 0
+    attendance_rate = 95  # This should be calculated from actual attendance data
+    
+    # Create plots dictionary to store chart data
+    plots = {}
+    
+    # ============= CHART 1: Department Performance Overview =============
+    dept_performance = df.groupby('department').agg({
+        'total': ['mean', 'count'],
+        'internal': 'mean',
+        'external': 'mean'
+    }).round(2)
+    dept_performance.columns = ['avg_total', 'student_count', 'avg_internal', 'avg_external']
+    
+    fig_dept = go.Figure()
+    fig_dept.add_trace(go.Bar(
+        x=dept_performance.index,
+        y=dept_performance['avg_total'],
+        name='Average Total',
+        marker_color='#3498db'
+    ))
+    fig_dept.add_trace(go.Bar(
+        x=dept_performance.index,
+        y=dept_performance['avg_internal'],
+        name='Average Internal',
+        marker_color='#2ecc71'
+    ))
+    fig_dept.add_trace(go.Bar(
+        x=dept_performance.index,
+        y=dept_performance['avg_external'],
+        name='Average External',
+        marker_color='#e74c3c'
+    ))
     fig_dept.update_layout(
+        title='Department Performance Overview',
         xaxis_title='Department',
         yaxis_title='Average Marks',
+        barmode='group',
+        template='plotly_white',
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+    plots['dept'] = json.dumps(fig_dept, cls=plotly.utils.PlotlyJSONEncoder)
+    
+    # ============= CHART 2: Subject-wise Performance Distribution =============
+    subject_stats = df.groupby('subject').agg({
+        'total': ['mean', 'std', 'min', 'max'],
+        'student_id': 'count'
+    }).round(2)
+    subject_stats.columns = ['mean', 'std', 'min', 'max', 'student_count']
+    
+    fig_subject = go.Figure()
+    fig_subject.add_trace(go.Box(
+        y=df['total'],
+        x=df['subject'],
+        name='Marks Distribution',
+        boxpoints='all',
+        jitter=0.3,
+        pointpos=-1.8,
+        marker_color='#3498db'
+    ))
+    fig_subject.update_layout(
+        title='Subject-wise Performance Distribution',
+        xaxis_title='Subject',
+        yaxis_title='Marks',
         template='plotly_white'
     )
+    plots['subject'] = json.dumps(fig_subject, cls=plotly.utils.PlotlyJSONEncoder)
     
-    # 2. Subject Performance Distribution
-    fig_subject = px.box(
-        df,
-        x='subject',
-        y='total',
-        title='Subject Performance Distribution',
-        color='subject',
-        color_discrete_sequence=px.colors.qualitative.Set3
-    )
-    fig_subject.update_layout(
-        xaxis_title='Subject',
-        yaxis_title='Total Marks',
-        template='plotly_white',
-        showlegend=False
-    )
+    # ============= CHART 3: Top 10 Performers =============
+    top_students = df.groupby(['student_id', 'student_name']).agg({
+        'total': 'mean',
+        'semester': 'count'
+    }).round(2)
+    top_students.columns = ['avg_marks', 'semesters']
+    top_students = top_students.nlargest(10, 'avg_marks').reset_index()
     
-    # 3. Top 5 Performers
-    top_students = df.groupby('student')['total'].mean().nlargest(5).reset_index()
-    fig_top = px.bar(
-        top_students,
-        x='total',
-        y='student',
+    fig_top = go.Figure()
+    fig_top.add_trace(go.Bar(
+        x=top_students['avg_marks'],
+        y=top_students['student_name'],
         orientation='h',
-        title='Top 5 Performers',
-        color='total',
-        color_continuous_scale='Viridis'
-    )
+        marker_color='#2ecc71',
+        text=top_students['avg_marks'].round(2),
+        textposition='auto'
+    ))
     fig_top.update_layout(
+        title='Top 10 Performers',
         xaxis_title='Average Marks',
         yaxis_title='Student',
         template='plotly_white'
     )
+    plots['top'] = json.dumps(fig_top, cls=plotly.utils.PlotlyJSONEncoder)
     
-    # 4. Semester-wise Performance
-    semester_perf = df.groupby('semester')['total'].mean().reset_index()
-    fig_semester = px.line(
-        semester_perf,
-        x='semester',
-        y='total',
-        title='Semester-wise Performance Trend',
-        markers=True
-    )
+    # ============= CHART 4: Semester-wise Performance Trend =============
+    semester_stats = df.groupby('semester').agg({
+        'total': ['mean', 'std'],
+        'student_id': 'count'
+    }).round(2)
+    semester_stats.columns = ['mean', 'std', 'student_count']
+    
+    fig_semester = go.Figure()
+    fig_semester.add_trace(go.Scatter(
+        x=semester_stats.index,
+        y=semester_stats['mean'],
+        mode='lines+markers',
+        name='Average Marks',
+        line=dict(color='#3498db', width=2),
+        marker=dict(size=8)
+    ))
+    fig_semester.add_trace(go.Scatter(
+        x=semester_stats.index,
+        y=semester_stats['mean'] + semester_stats['std'],
+        fill=None,
+        mode='lines',
+        line=dict(width=0),
+        showlegend=False
+    ))
+    fig_semester.add_trace(go.Scatter(
+        x=semester_stats.index,
+        y=semester_stats['mean'] - semester_stats['std'],
+        fill='tonexty',
+        mode='lines',
+        line=dict(width=0),
+        name='Standard Deviation'
+    ))
     fig_semester.update_layout(
+        title='Semester-wise Performance Trend',
         xaxis_title='Semester',
         yaxis_title='Average Marks',
         template='plotly_white'
     )
+    plots['semester'] = json.dumps(fig_semester, cls=plotly.utils.PlotlyJSONEncoder)
     
-    # 5. Subject Heatmap
+    # ============= CHART 5: Subject Performance Heatmap =============
     pivot_df = df.pivot_table(
         index='subject',
         columns='semester',
         values='total',
         aggfunc='mean'
-    ).fillna(0)
+    ).fillna(0).round(2)
     
-    fig_heatmap = px.imshow(
-        pivot_df,
-        title='Subject Performance Heatmap',
-        color_continuous_scale='RdYlGn'
-    )
+    fig_heatmap = go.Figure(data=go.Heatmap(
+        z=pivot_df.values,
+        x=pivot_df.columns,
+        y=pivot_df.index,
+        colorscale='RdYlGn',
+        zmin=0,
+        zmax=100
+    ))
     fig_heatmap.update_layout(
+        title='Subject Performance Heatmap',
         xaxis_title='Semester',
         yaxis_title='Subject',
         template='plotly_white'
     )
+    plots['heatmap'] = json.dumps(fig_heatmap, cls=plotly.utils.PlotlyJSONEncoder)
     
-    # 6. Department-wise Subject Performance
+    # ============= CHART 6: Department-wise Subject Performance (Radar Chart) =============
+    dept_subject_avg = df.pivot_table(
+        index='department',
+        columns='subject',
+        values='total',
+        aggfunc='mean'
+    ).fillna(0).round(2)
+    
     fig_radar = go.Figure()
-    departments = df['department'].unique()
-    subjects = df['subject'].unique()
-    
-    for dept in departments:
-        dept_data = df[df['department'] == dept]
-        dept_avg = dept_data.groupby('subject')['total'].mean()
+    for dept in dept_subject_avg.index:
         fig_radar.add_trace(go.Scatterpolar(
-            r=dept_avg.values,
-            theta=dept_avg.index,
+            r=dept_subject_avg.loc[dept].values,
+            theta=dept_subject_avg.columns,
             fill='toself',
             name=dept
         ))
-    
     fig_radar.update_layout(
         polar=dict(
             radialaxis=dict(
@@ -912,19 +1008,25 @@ def staff_dashboard(id):
         title='Department-wise Subject Performance',
         template='plotly_white'
     )
+    plots['radar'] = json.dumps(fig_radar, cls=plotly.utils.PlotlyJSONEncoder)
     
-    # 7. Animated Scatter Plot (Student Performance)
+    # ============= CHART 7: Student Performance Animation =============
+    student_semester_avg = df.groupby(['student_id', 'student_name', 'semester'])['total'].mean().reset_index()
+    
     fig_scatter = px.scatter(
-        df,
+        student_semester_avg,
         x='semester',
         y='total',
         animation_frame='semester',
-        animation_group='student',
+        animation_group='student_name',
         size='total',
-        color='subject',
-        title='Student Performance Across Semesters'
+        color='student_name',
+        title='Student Performance Across Semesters',
+        template='plotly_white'
     )
     fig_scatter.update_layout(
+        xaxis_title='Semester',
+        yaxis_title='Average Marks',
         updatemenus=[
             dict(
                 type="buttons",
@@ -958,16 +1060,23 @@ def staff_dashboard(id):
             )
         ]
     )
+    plots['scatter'] = json.dumps(fig_scatter, cls=plotly.utils.PlotlyJSONEncoder)
     
-    # 8. Animated Bar Chart (Subject Performance)
+    # ============= CHART 8: Subject Performance Animation =============
+    subject_semester_avg = df.groupby(['subject', 'semester'])['total'].mean().reset_index()
+    
     fig_bar = px.bar(
-        df,
+        subject_semester_avg,
         x='subject',
         y='total',
         animation_frame='semester',
-        title='Subject Performance Across Semesters'
+        color='subject',
+        title='Subject Performance Across Semesters',
+        template='plotly_white'
     )
     fig_bar.update_layout(
+        xaxis_title='Subject',
+        yaxis_title='Average Marks',
         updatemenus=[
             dict(
                 type="buttons",
@@ -1001,44 +1110,43 @@ def staff_dashboard(id):
             )
         ]
     )
+    plots['bar'] = json.dumps(fig_bar, cls=plotly.utils.PlotlyJSONEncoder)
     
-    # 9. Progress Chart (Cumulative Performance)
-    # Calculate cumulative average for each student across semesters
-    student_progress = df.groupby(['student', 'semester'])['total'].mean().reset_index()
-    student_progress = student_progress.sort_values(['student', 'semester'])
-    student_progress['cumulative_avg'] = student_progress.groupby('student')['total'].transform('cumsum') / student_progress.groupby('student')['semester'].transform('count')
+    # ============= CHART 9: Student Progress Chart =============
+    student_progress = df.groupby(['student_id', 'student_name', 'semester'])['total'].mean().reset_index()
+    student_progress = student_progress.sort_values(['student_id', 'semester'])
+    
+    # Calculate cumulative average correctly
+    for student_id in student_progress['student_id'].unique():
+        mask = student_progress['student_id'] == student_id
+        student_progress.loc[mask, 'cumulative_avg'] = student_progress.loc[mask, 'total'].expanding().mean().values
+    
+    # Limit to first 10 students to avoid overcrowding
+    top_student_ids = top_students['student_id'].tolist()[:10]
+    filtered_progress = student_progress[student_progress['student_id'].isin(top_student_ids)]
     
     fig_progress = px.line(
-        student_progress,
+        filtered_progress,
         x='semester',
         y='cumulative_avg',
-        color='student',
+        color='student_name',
         title='Student Progress Over Time',
-        labels={'cumulative_avg': 'Cumulative Average', 'semester': 'Semester'}
+        template='plotly_white'
     )
     fig_progress.update_layout(
-        template='plotly_white',
+        xaxis_title='Semester',
+        yaxis_title='Cumulative Average',
         legend=dict(
-            yanchor="top",
-            y=0.99,
-            xanchor="left",
-            x=0.01
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
         )
     )
+    plots['progress'] = json.dumps(fig_progress, cls=plotly.utils.PlotlyJSONEncoder)
     
-    # Prepare all plots
-    plots = {
-        'dept': json.dumps(fig_dept, cls=plotly.utils.PlotlyJSONEncoder),
-        'subject': json.dumps(fig_subject, cls=plotly.utils.PlotlyJSONEncoder),
-        'top': json.dumps(fig_top, cls=plotly.utils.PlotlyJSONEncoder),
-        'semester': json.dumps(fig_semester, cls=plotly.utils.PlotlyJSONEncoder),
-        'heatmap': json.dumps(fig_heatmap, cls=plotly.utils.PlotlyJSONEncoder),
-        'radar': json.dumps(fig_radar, cls=plotly.utils.PlotlyJSONEncoder),
-        'scatter': json.dumps(fig_scatter, cls=plotly.utils.PlotlyJSONEncoder),
-        'bar': json.dumps(fig_bar, cls=plotly.utils.PlotlyJSONEncoder),
-        'progress': json.dumps(fig_progress, cls=plotly.utils.PlotlyJSONEncoder)
-    }
-    
+    # Render template with all chart data
     return render_template('staff_dashboard.html',
                          staff=staff,
                          plots=plots,
@@ -1051,7 +1159,7 @@ def staff_dashboard(id):
 
 @app.route('/api/refresh-stats', methods=['POST'])
 def refresh_stats():
-    # Endpoint for staff dashboard data refresh
+    """Endpoint for refreshing staff dashboard data based on semester selection."""
     semester = request.json.get('semester')
     if not semester:
         return jsonify({'error': 'Semester required'}), 400
@@ -1059,10 +1167,13 @@ def refresh_stats():
     # Get all marks
     all_marks = Mark.query.all()
     
-    # Create DataFrame for all marks
+    # Create DataFrame for all marks with proper type conversion
     df = pd.DataFrame([{
-        'student': m.student.user.name,
+        'student_id': str(m.student.id),
+        'student_name': m.student.user.name,
         'subject': m.subject,
+        'internal': float(m.internal),
+        'external': float(m.external),
         'total': float(m.total),
         'semester': m.semester,
         'department': m.student.department
@@ -1072,24 +1183,164 @@ def refresh_stats():
     if semester != 'all':
         df = df[df['semester'] == int(semester)]
     
-    # Create animated charts
-    charts = create_animated_charts(df.to_dict('records'), semester)
+    # ============= CHART 1: Subject Performance Distribution =============
+    fig_subject = go.Figure()
     
-    # Average marks by subject
-    avg_marks = df.groupby('subject')['total'].mean().reset_index()
-    avg_fig = px.bar(avg_marks, x='subject', y='total',
-                    title=f'Semester {semester} - Average Marks by Subject')
+    if not df.empty:
+        fig_subject.add_trace(go.Box(
+            y=df['total'],
+            x=df['subject'],
+            name='Marks Distribution',
+            boxpoints='all',
+            jitter=0.3,
+            pointpos=-1.8,
+            marker_color='#3498db'
+        ))
     
-    # Top 5 performers
-    top_students = df.groupby('student')['total'].mean().nlargest(5)
-    top_fig = px.bar(top_students, orientation='h',
-                    title=f'Semester {semester} - Top 5 Performers')
+    semester_label = f"Semester {semester}" if semester != 'all' else "All Semesters"
+    fig_subject.update_layout(
+        title=f'{semester_label} - Subject Performance Distribution',
+        xaxis_title='Subject',
+        yaxis_title='Marks',
+        template='plotly_white'
+    )
     
+    # ============= CHART 2: Top Performers =============
+    top_students = df.groupby(['student_id', 'student_name'])['total'].mean().reset_index()
+    top_students = top_students.nlargest(10, 'total')
+    
+    fig_top = go.Figure()
+    
+    if not top_students.empty:
+        fig_top.add_trace(go.Bar(
+            x=top_students['total'],
+            y=top_students['student_name'],
+            orientation='h',
+            marker_color='#2ecc71',
+            text=top_students['total'].round(2),
+            textposition='auto'
+        ))
+    
+    fig_top.update_layout(
+        title=f'{semester_label} - Top 10 Performers',
+        xaxis_title='Average Marks',
+        yaxis_title='Student',
+        template='plotly_white'
+    )
+    
+    # ============= CHART 3: Student Performance Animation =============
+    student_semester_avg = df.groupby(['student_id', 'student_name', 'semester'])['total'].mean().reset_index()
+    
+    # Use only top 15 students to avoid visual clutter
+    top_student_ids = top_students['student_id'].tolist()[:15] if not top_students.empty else []
+    student_semester_filtered = student_semester_avg[student_semester_avg['student_id'].isin(top_student_ids)] if top_student_ids else student_semester_avg
+    
+    fig_scatter = px.scatter(
+        student_semester_filtered,
+        x='semester',
+        y='total',
+        animation_frame='semester',
+        animation_group='student_name',
+        size='total',
+        color='student_name',
+        title=f'{semester_label} - Student Performance Animation',
+        template='plotly_white'
+    )
+    fig_scatter.update_layout(
+        xaxis_title='Semester',
+        yaxis_title='Average Marks',
+        updatemenus=[
+            dict(
+                type="buttons",
+                buttons=[
+                    dict(
+                        label="Play",
+                        method="animate",
+                        args=[None, {
+                            "frame": {"duration": 1000, "redraw": True},
+                            "mode": "immediate",
+                            "fromcurrent": True
+                        }]
+                    ),
+                    dict(
+                        label="Pause",
+                        method="animate",
+                        args=[[None], {
+                            "frame": {"duration": 0, "redraw": False},
+                            "mode": "immediate",
+                            "fromcurrent": True
+                        }]
+                    )
+                ],
+                direction="left",
+                pad={"r": 10, "t": 87},
+                showactive=True,
+                x=0.1,
+                xanchor="right",
+                y=0,
+                yanchor="top"
+            )
+        ]
+    )
+    
+    # ============= CHART 4: Subject Performance Animation =============
+    subject_semester_avg = df.groupby(['subject', 'semester'])['total'].mean().reset_index()
+    
+    fig_bar = px.bar(
+        subject_semester_avg,
+        x='subject',
+        y='total',
+        animation_frame='semester',
+        color='subject',
+        title=f'{semester_label} - Subject Performance Animation',
+        template='plotly_white'
+    )
+    fig_bar.update_layout(
+        xaxis_title='Subject',
+        yaxis_title='Average Marks',
+        updatemenus=[
+            dict(
+                type="buttons",
+                buttons=[
+                    dict(
+                        label="Play",
+                        method="animate",
+                        args=[None, {
+                            "frame": {"duration": 1000, "redraw": True},
+                            "mode": "immediate",
+                            "fromcurrent": True
+                        }]
+                    ),
+                    dict(
+                        label="Pause",
+                        method="animate",
+                        args=[[None], {
+                            "frame": {"duration": 0, "redraw": False},
+                            "mode": "immediate",
+                            "fromcurrent": True
+                        }]
+                    )
+                ],
+                direction="left",
+                pad={"r": 10, "t": 87},
+                showactive=True,
+                x=0.1,
+                xanchor="right",
+                y=0,
+                yanchor="top"
+            )
+        ]
+    )
+    
+    # Prepare response with all chart data
     return jsonify({
-        'avg_chart': json.dumps(avg_fig, cls=plotly.utils.PlotlyJSONEncoder),
-        'top_chart': json.dumps(top_fig, cls=plotly.utils.PlotlyJSONEncoder),
-        'animated_charts': charts
+        'avg_chart': json.dumps(fig_subject, cls=plotly.utils.PlotlyJSONEncoder),
+        'top_chart': json.dumps(fig_top, cls=plotly.utils.PlotlyJSONEncoder),
+        'animated_charts': {
+            'scatter': json.dumps(fig_scatter, cls=plotly.utils.PlotlyJSONEncoder),
+            'bar': json.dumps(fig_bar, cls=plotly.utils.PlotlyJSONEncoder)
+        }
     })
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(debug=True)
